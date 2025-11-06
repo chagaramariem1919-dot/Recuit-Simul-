@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Optimisation TSP - Recuit Simulé (1000 itérations)</title>
+<style>
+  :root {
+    --primary: #9b59b6;
+    --secondary: #8e44ad;
+    --accent: #e74c3c;
+    --success: #27ae60;
+    --warning: #f39c12;
+    --recuit-hot: #e74c3c;
+    --recuit-cool: #3498db;
+    --background: #f5f7fa;
+    --panel: #ffffff;
+    --text: #2c3e50;
+    --border: #dce1e8;
+  }
+  
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: var(--background);
+    color: var(--text);
+    line-height: 1.6;
+    min-height: 100vh;
+    padding: 20px;
+  }
+  
+  .header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding: 20px;
+    background: var(--panel);
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--border);
+  }
+  
+  .header h1 {
+    color: var(--primary);
+    font-size: 2.2rem;
+    margin-bottom: 10px;
+  }
+  
+  .container {
+    display: flex;
+    gap: 25px;
+    max-width: 1600px;
+    margin: 0 auto;
+  }
+  
+  .canvas-panel {
+    flex: 2;
+    background: var(--panel);
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .canvas-panel h2 {
+    margin-bottom: 15px;
+    color: var(--primary);
+    font-size: 1.5rem;
+  }
+  
+  canvas {
+    width: 100%;
+    flex: 1;
+    display: block;
+    background: #ffffff;
+    border-radius: 10px;
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--border);
+  }
+  
+  .control-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+    min-width: 350px;
+  }
+  
+  .panel {
+    background: var(--panel);
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--border);
+  }
+  
+  .panel h3 {
+    margin-bottom: 15px;
+    color: var(--primary);
+    font-size: 1.3rem;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  
+  .solution-display {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    margin-top: 10px;
+    font-family: monospace;
+    font-size: 1.1rem;
+    border: 1px solid var(--border);
+  }
+  
+  .distance {
+    font-weight: bold;
+    color: var(--success);
+    font-size: 1.2rem;
+    margin-top: 10px;
+    text-align: center;
+    padding: 8px;
+    background: #f0f9f4;
+    border-radius: 6px;
+  }
+  
+  .input-group {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+  }
+  
+  .input-group label {
+    font-size: 1rem;
+    font-weight: 500;
+  }
+  
+  input[type="number"] {
+    width: 80px;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: #ffffff;
+    color: var(--text);
+    text-align: center;
+    font-size: 1rem;
+  }
+  
+  .btn {
+    padding: 14px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  }
+  
+  .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .btn-start {
+    background: var(--success);
+    color: white;
+  }
+  
+  .btn-start:hover {
+    background: #219653;
+  }
+  
+  .btn-pause {
+    background: var(--warning);
+    color: white;
+  }
+  
+  .btn-pause:hover {
+    background: #e67e22;
+  }
+  
+  .btn-reset {
+    background: var(--accent);
+    color: white;
+  }
+  
+  .btn-reset:hover {
+    background: #c0392b;
+  }
+  
+  .btn-group {
+    display: flex;
+    gap: 15px;
+    margin-top: 15px;
+  }
+  
+  .btn-group .btn {
+    flex: 1;
+  }
+  
+  #temperatureInfo {
+    max-height: 150px;
+    overflow-y: auto;
+    background: #f8f9fa;
+    padding: 10px;
+    border-radius: 8px;
+    margin-top: 10px;
+    border: 1px solid var(--border);
+  }
+  
+  .temperature-item {
+    padding: 8px 12px;
+    margin-bottom: 8px;
+    background: #e8f4fd;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    border-left: 4px solid var(--recuit-cool);
+    font-family: monospace;
+    transition: all 0.3s ease;
+  }
+  
+  .temperature-item.hot {
+    background: #ffe6e6;
+    border-left-color: var(--recuit-hot);
+  }
+  
+  .temperature-item.cool {
+    background: #e6f7ff;
+    border-left-color: var(--recuit-cool);
+  }
+  
+  .iteration-info {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid var(--border);
+  }
+  
+  .progress-container {
+    margin-top: 15px;
+    height: 10px;
+    background: #e9ecef;
+    border-radius: 5px;
+    overflow: hidden;
+  }
+  
+  .progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--recuit-hot), var(--recuit-cool));
+    width: 0%;
+    transition: width 0.3s ease;
+  }
+  
+  .legend {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 15px;
+    font-size: 0.9rem;
+  }
+  
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  
+  .legend-color {
+    width: 15px;
+    height: 15px;
+    border-radius: 3px;
+  }
+  
+  .current-legend {
+    background: var(--primary);
+  }
+  
+  .best-legend {
+    background: var(--success);
+  }
+  
+  .min-distance {
+    text-align: center;
+    margin-top: 15px;
+    padding: 10px;
+    background: #fff9e6;
+    border-radius: 8px;
+    font-weight: bold;
+    color: var(--warning);
+    border: 1px solid #ffeaa7;
+  }
+  
+  .temperature-gauge {
+    height: 20px;
+    background: linear-gradient(90deg, var(--recuit-hot), #f39c12, #3498db, var(--recuit-cool));
+    border-radius: 10px;
+    margin: 10px 0;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .temperature-indicator {
+    position: absolute;
+    top: 0;
+    width: 3px;
+    height: 100%;
+    background: #2c3e50;
+    transform: translateX(-50%);
+  }
+  
+  .acceptance-rate {
+    text-align: center;
+    font-size: 0.9rem;
+    color: var(--text);
+    margin-top: 5px;
+  }
+  
+  .stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 10px;
+  }
+  
+  .stat-item {
+    background: #f8f9fa;
+    padding: 8px;
+    border-radius: 6px;
+    text-align: center;
+    font-size: 0.9rem;
+  }
+  
+  .stat-value {
+    font-weight: bold;
+    color: var(--primary);
+  }
+  
+  /* Responsive */
+  @media (max-width: 1100px) {
+    .container {
+      flex-direction: column;
+    }
+    
+    .canvas-panel {
+      min-height: 500px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Optimisation TSP - Recuit Simulé (1000 itérations)</h1>
+  <p>Algorithme du Recuit Simulé avec exactement 1000 itérations pour trouver le chemin optimal</p>
+</div>
+
+<div class="container">
+  <div class="canvas-panel">
+    <h2>Visualisation du Parcours</h2>
+    <canvas id="tspCanvas"></canvas>
+    <div class="legend">
+      <div class="legend-item">
+        <div class="legend-color current-legend"></div>
+        <span>Solution Actuelle</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color best-legend"></div>
+        <span>Meilleure Solution</span>
+      </div>
+    </div>
+    <div class="min-distance" id="minDistanceDisplay" style="display: none;">
+      Distance minimale trouvée: <span id="minDistanceValue">0</span>
+    </div>
+  </div>
+  
+  <div class="control-panel">
+    <div class="panel">
+      <h3>Paramètres du Recuit Simulé</h3>
+      <div class="input-group">
+        <label for="cityCount">Nombre de villes:</label>
+        <input type="number" id="cityCount" value="15" min="5" max="50">
+      </div>
+      <div class="input-group">
+        <label for="tempInitial">Température initiale:</label>
+        <input type="number" id="tempInitial" value="1000" min="100" max="10000">
+      </div>
+      <div class="input-group">
+        <label for="maxIterations">Itérations maximum:</label>
+        <input type="number" id="maxIterations" value="1000" min="100" max="10000" readonly>
+      </div>
+      <div class="input-group">
+        <label for="alpha">Facteur de refroidissement (α):</label>
+        <input type="number" id="alpha" value="0.95" min="0.8" max="0.999" step="0.001">
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>Solution Actuelle</h3>
+      <div class="solution-display" id="currentSol">[ ]</div>
+      <div class="distance">Distance: <span id="currentDist">0</span></div>
+    </div>
+
+    <div class="panel">
+      <h3>Meilleure Solution</h3>
+      <div class="solution-display" id="bestSol">[ ]</div>
+      <div class="distance">Distance: <span id="bestDist">0</span></div>
+    </div>
+
+    <div class="panel">
+      <h3>État du Recuit Simulé</h3>
+      <div class="temperature-gauge">
+        <div class="temperature-indicator" id="tempIndicator" style="left: 100%;"></div>
+      </div>
+      <div class="acceptance-rate">
+        Taux d'acceptation: <span id="acceptanceRate">0%</span>
+      </div>
+      <div class="stats">
+        <div class="stat-item">
+          Itérations: <span class="stat-value" id="statIterations">0</span>/1000
+        </div>
+        <div class="stat-item">
+          Acceptations: <span class="stat-value" id="statAcceptances">0</span>
+        </div>
+        <div class="stat-item">
+          Améliorations: <span class="stat-value" id="statImprovements">0</span>
+        </div>
+        <div class="stat-item">
+          Rejets: <span class="stat-value" id="statRejects">0</span>
+        </div>
+      </div>
+      <div id="temperatureInfo">
+        <div class="temperature-item">Prêt à démarrer - 1000 itérations maximum</div>
+      </div>
+      <div class="iteration-info">
+        <span>Itération: <span id="currentIter">0</span>/1000</span>
+        <span>Température: <span id="currentTemp">1000.00</span>°</span>
+      </div>
+      <div class="progress-container">
+        <div class="progress-bar" id="progressBar" style="width: 0%"></div>
+      </div>
+    </div>
+
+    <div class="btn-group">
+      <button class="btn btn-start" id="start">
+        Démarrer (1000 itérations)
+      </button>
+      <button class="btn btn-pause" id="pause" style="display:none;">
+        Pause
+      </button>
+      <button class="btn btn-reset" id="reset">
+        Réinitialiser
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+let canvas = document.getElementById('tspCanvas');
+let ctx = canvas.getContext('2d');
+
+// Variables de l'algorithme
+let cities = [];
+let currentSolution = [];
+let bestSolution = [];
+let currentDistance = 0;
+let bestDistance = Infinity;
+
+// Paramètres du recuit simulé
+let currentTemperature = 1000;
+let initialTemperature = 1000;
+let alpha = 0.95;
+const MAX_ITERATIONS = 1000; // Exactement 1000 itérations
+
+// État de l'exécution
+let currentIteration = 0;
+let isRunning = false;
+let animationId;
+
+// Statistiques
+let acceptances = 0;
+let improvements = 0;
+let rejects = 0;
+let totalAcceptances = 0;
+
+// Initialisation
+function initialize() {
+  const cityCount = parseInt(document.getElementById('cityCount').value);
+  cities = generateRandomCities(cityCount);
+  
+  // Solution initiale aléatoire
+  currentSolution = Array.from({length: cityCount}, (_, i) => i);
+  currentSolution = shuffleArray([...currentSolution]);
+  currentDistance = calculateTotalDistance(currentSolution);
+  
+  bestSolution = [...currentSolution];
+  bestDistance = currentDistance;
+  
+  // Réinitialiser les paramètres
+  initialTemperature = parseFloat(document.getElementById('tempInitial').value);
+  currentTemperature = initialTemperature;
+  alpha = parseFloat(document.getElementById('alpha').value);
+  
+  // Réinitialiser les statistiques
+  currentIteration = 0;
+  acceptances = 0;
+  improvements = 0;
+  rejects = 0;
+  totalAcceptances = 0;
+  
+  updateStats();
+  updateTemperatureInfo();
+  drawCities();
+  
+  document.getElementById('minDistanceDisplay').style.display = 'none';
+  document.getElementById('progressBar').style.width = '0%';
+}
+
+function generateRandomCities(count) {
+  const cities = [];
+  const padding = 50;
+  
+  for (let i = 0; i < count; i++) {
+    cities.push({
+      x: padding + Math.random() * (canvas.width - 2 * padding),
+      y: padding + Math.random() * (canvas.height - 2 * padding),
+      id: i
+    });
+  }
+  return cities;
+}
+
+function shuffleArray(array) {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
+
+function resizeCanvas() {
+  canvas.width = canvas.parentElement.clientWidth;
+  canvas.height = canvas.parentElement.clientHeight - 100;
+  if (cities.length > 0) {
+    drawCities();
+  }
+}
+
+function calculateDistance(a, b) {
+  return Math.hypot(a.x - b.x, a.y - b.y);
+}
+
+function calculateTotalDistance(solution) {
+  let total = 0;
+  for (let i = 0; i < solution.length - 1; i++) {
+    total += calculateDistance(cities[solution[i]], cities[solution[i + 1]]);
+  }
+  total += calculateDistance(cities[solution[solution.length - 1]], cities[solution[0]]);
+  return total;
+}
+
+function generateNeighbor(solution) {
+  // Échange deux villes aléatoires
+  const neighbor = [...solution];
+  const i = Math.floor(Math.random() * solution.length);
+  let j = Math.floor(Math.random() * solution.length);
+  while (i === j) {
+    j = Math.floor(Math.random() * solution.length);
+  }
+  [neighbor[i], neighbor[j]] = [neighbor[j], neighbor[i]];
+  return neighbor;
+}
+
+function drawCities() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+  // Dessiner le meilleur chemin en vert
+  if (bestSolution.length > 0) {
+    ctx.beginPath();
+    ctx.moveTo(cities[bestSolution[0]].x, cities[bestSolution[0]].y);
+    for (let i = 1; i < bestSolution.length; i++) {
+      ctx.lineTo(cities[bestSolution[i]].x, cities[bestSolution[i]].y);
+    }
+    ctx.lineTo(cities[bestSolution[0]].x, cities[bestSolution[0]].y);
+    ctx.strokeStyle = '#27ae60';
+    ctx.lineWidth = 4;
+    ctx.setLineDash([5, 5]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+  
+  // Dessiner le chemin actuel en violet
+  if (currentSolution.length > 0) {
+    ctx.beginPath();
+    ctx.moveTo(cities[currentSolution[0]].x, cities[currentSolution[0]].y);
+    for (let i = 1; i < currentSolution.length; i++) {
+      ctx.lineTo(cities[currentSolution[i]].x, cities[currentSolution[i]].y);
+    }
+    ctx.lineTo(cities[currentSolution[0]].x, cities[currentSolution[0]].y);
+    ctx.strokeStyle = '#9b59b6';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+  }
+  
+  // Dessiner les villes
+  for (let c of cities) {
+    // Cercle extérieur
+    ctx.beginPath();
+    ctx.arc(c.x, c.y, 8, 0, Math.PI * 2);
+    ctx.fillStyle = '#e74c3c';
+    ctx.fill();
+    
+    // Cercle intérieur
+    ctx.beginPath();
+    ctx.arc(c.x, c.y, 5, 0, Math.PI * 2);
+    ctx.fillStyle = '#ffffff';
+    ctx.fill();
+    
+    // Numéro de la ville
+    ctx.fillStyle = '#2c3e50';
+    ctx.font = 'bold 12px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(c.id, c.x, c.y);
+  }
+}
+
+function runSimulatedAnnealing() {
+  if (!isRunning || currentIteration >= MAX_ITERATIONS) {
+    finishAlgorithm();
+    return;
+  }
+  
+  function runIteration() {
+    if (currentIteration >= MAX_ITERATIONS || !isRunning) {
+      finishAlgorithm();
+      return;
+    }
+    
+    // Générer un voisin
+    const neighbor = generateNeighbor(currentSolution);
+    const neighborDistance = calculateTotalDistance(neighbor);
+    const delta = neighborDistance - currentDistance;
+    
+    // Décision d'acceptation
+    let accepted = false;
+    
+    if (delta < 0) {
+      // Solution améliorante : toujours acceptée
+      accepted = true;
+      improvements++;
+    } else {
+      // Solution dégradante : acceptée avec probabilité exp(-delta/T)
+      const acceptanceProbability = Math.exp(-delta / currentTemperature);
+      if (Math.random() < acceptanceProbability) {
+        accepted = true;
+        acceptances++;
+      } else {
+        rejects++;
+      }
+    }
+    
+    if (accepted) {
+      currentSolution = neighbor;
+      currentDistance = neighborDistance;
+      totalAcceptances++;
+      
+      // Mettre à jour la meilleure solution
+      if (currentDistance < bestDistance) {
+        bestSolution = [...currentSolution];
+        bestDistance = currentDistance;
+      }
+    }
+    
+    currentIteration++;
+    
+    // Refroidir la température (réduction géométrique)
+    currentTemperature = initialTemperature * Math.pow(alpha, currentIteration / MAX_ITERATIONS);
+    
+    // Mettre à jour l'interface
+    updateStats();
+    updateTemperatureInfo();
+    drawCities();
+    
+    // Calculer le taux d'acceptation actuel
+    const currentAcceptanceRate = currentIteration > 0 ? totalAcceptances / currentIteration : 0;
+    
+    // Mettre à jour l'affichage en temps réel
+    document.getElementById('currentIter').textContent = currentIteration;
+    document.getElementById('currentTemp').textContent = currentTemperature.toFixed(2);
+    document.getElementById('acceptanceRate').textContent = Math.round(currentAcceptanceRate * 100) + '%';
+    
+    // Mettre à jour la jauge de température
+    const tempProgress = Math.max(0, Math.min(100, (currentTemperature / initialTemperature) * 100));
+    document.getElementById('tempIndicator').style.left = tempProgress + '%';
+    
+    // Mettre à jour la barre de progression (basée sur les itérations)
+    const iterationProgress = (currentIteration / MAX_ITERATIONS) * 100;
+    document.getElementById('progressBar').style.width = `${iterationProgress}%`;
+    
+    // Continuer l'exécution
+    if (isRunning && currentIteration < MAX_ITERATIONS) {
+      // Utiliser setTimeout pour ralentir l'animation et permettre la visualisation
+      setTimeout(() => {
+        animationId = requestAnimationFrame(runIteration);
+      }, 10); // 10ms de délai entre les itérations pour mieux voir l'évolution
+    } else {
+      finishAlgorithm();
+    }
+  }
+  
+  runIteration();
+}
+
+function startAlgorithm() {
+  if (isRunning) return;
+  
+  isRunning = true;
+  document.getElementById('start').style.display = 'none';
+  document.getElementById('pause').style.display = 'flex';
+  document.getElementById('minDistanceDisplay').style.display = 'none';
+  
+  runSimulatedAnnealing();
+}
+
+function pauseAlgorithm() {
+  isRunning = false;
+  document.getElementById('start').style.display = 'flex';
+  document.getElementById('pause').style.display = 'none';
+  cancelAnimationFrame(animationId);
+}
+
+function finishAlgorithm() {
+  isRunning = false;
+  document.getElementById('start').style.display = 'flex';
+  document.getElementById('pause').style.display = 'none';
+  document.getElementById('minDistanceDisplay').style.display = 'block';
+  document.getElementById('minDistanceValue').textContent = bestDistance.toFixed(2);
+  
+  // Affichage final
+  updateStats();
+  updateTemperatureInfo();
+  drawCities();
+  
+  // Message de fin
+  const tempInfo = document.getElementById('temperatureInfo');
+  const finalMessage = document.createElement('div');
+  finalMessage.className = 'temperature-item hot';
+  finalMessage.textContent = `✓ Optimisation terminée! 1000 itérations effectuées. Distance minimale: ${bestDistance.toFixed(2)}`;
+  tempInfo.appendChild(finalMessage);
+  tempInfo.scrollTop = tempInfo.scrollHeight;
+}
+
+function updateStats() {
+  document.getElementById('currentSol').textContent = '[' + currentSolution.join(', ') + ']';
+  document.getElementById('currentDist').textContent = currentDistance.toFixed(2);
+  document.getElementById('bestSol').textContent = '[' + bestSolution.join(', ') + ']';
+  document.getElementById('bestDist').textContent = bestDistance.toFixed(2);
+  
+  document.getElementById('statIterations').textContent = currentIteration;
+  document.getElementById('statAcceptances').textContent = acceptances;
+  document.getElementById('statImprovements').textContent = improvements;
+  document.getElementById('statRejects').textContent = rejects;
+}
+
+function updateTemperatureInfo() {
+  const el = document.getElementById('temperatureInfo');
+  
+  // Garder seulement les 5 derniers messages
+  if (el.children.length > 5) {
+    el.removeChild(el.children[0]);
+  }
+  
+  // Ajouter le nouvel état toutes les 50 itérations
+  if (currentIteration % 50 === 0 || currentIteration === MAX_ITERATIONS) {
+    const newItem = document.createElement('div');
+    newItem.className = 'temperature-item';
+    
+    if (currentTemperature > initialTemperature * 0.7) {
+      newItem.classList.add('hot');
+    } else if (currentTemperature < initialTemperature * 0.2) {
+      newItem.classList.add('cool');
+    }
+    
+    const acceptanceRate = currentIteration > 0 ? (totalAcceptances / currentIteration) : 0;
+    newItem.textContent = `Itération ${currentIteration}: Temp=${currentTemperature.toFixed(1)}° | Dist=${currentDistance.toFixed(1)} | Meilleure=${bestDistance.toFixed(1)}`;
+    
+    el.appendChild(newItem);
+    el.scrollTop = el.scrollHeight;
+  }
+}
+
+// Événements
+document.getElementById('start').addEventListener('click', startAlgorithm);
+document.getElementById('pause').addEventListener('click', pauseAlgorithm);
+document.getElementById('reset').addEventListener('click', function() {
+  pauseAlgorithm();
+  initialize();
+});
+
+// Mettre à jour les paramètres en temps réel
+document.getElementById('cityCount').addEventListener('change', function() {
+  if (!isRunning) initialize();
+});
+
+document.getElementById('tempInitial').addEventListener('change', function() {
+  initialTemperature = parseFloat(this.value);
+  if (!isRunning) currentTemperature = initialTemperature;
+});
+
+document.getElementById('alpha').addEventListener('change', function() {
+  alpha = parseFloat(this.value);
+});
+
+// Initialisation
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+initialize();
+</script>
+
+</body>
+</html>
